@@ -60,3 +60,24 @@ class UserLogin(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    reset_token: str
+
+    new_password: str = Field(
+        min_length=8
+    )
+
+    confirm_new_password: str
+
+    @model_validator(mode="after")
+    def validate_password(self) -> Self:
+        if self.new_password != self.confirm_new_password:
+            raise ValueError(
+                "New password and confirmation do not match"
+            )
+        return self

@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta, timezone
 
 import jwt
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -12,6 +13,7 @@ from app.core.config import (
     ALGORITHM,
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
+
 from app.database.session import get_db
 from app.modules.users import repository
 
@@ -29,13 +31,14 @@ def verify_password(
     plain_password: str,
     hashed_password: str
 ) -> bool:
+
     return password_hash.verify(
         plain_password,
         hashed_password
     )
 
 
-# JWT token generation
+# JWT access token generation
 def create_access_token(data: dict) -> str:
 
     to_encode = data.copy()
@@ -55,6 +58,26 @@ def create_access_token(data: dict) -> str:
     )
 
     return encoded_jwt
+
+
+# JWT password reset token generation
+def create_password_reset_token(user_id: int) -> str:
+
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=15
+    )
+
+    payload = {
+        "sub": str(user_id),
+        "purpose": "password_reset",
+        "exp": expire
+    }
+
+    return jwt.encode(
+        payload,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
 
 
 # JWT Bearer Authentication
@@ -83,6 +106,10 @@ def get_current_user(
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )
+
+        # Reject password reset tokens for normal authentication
+        if payload.get("purpose") == "password_reset":
+            raise credentials_exception
 
         user_id = payload.get("sub")
 

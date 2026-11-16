@@ -26,6 +26,16 @@ from app.modules.users.schemas import (
 
 from app.modules.users import repository
 
+from app.modules.auth.schemas import (
+    ForgotPasswordRequest,
+    ResetPasswordRequest
+)
+
+from app.modules.auth.service import (
+    forgot_password,
+    reset_password
+)
+
 
 router = APIRouter(
     prefix="/users",
@@ -139,4 +149,21 @@ def change_password(
     return {
         "message": "Password changed successfully"
     }
+# Forgot Password API
+@router.post("/forgot-password")
+def forgot_password_route(
+    user_data: ForgotPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    return forgot_password(db, user_data)
+
+
+# Reset Password API
+@router.post("/reset-password")
+def reset_password_route(
+    user_data: ResetPasswordRequest,
+    db: Session = Depends(get_db)
+):
+
+    return reset_password(db, user_data)
 
