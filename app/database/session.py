@@ -1,3 +1,4 @@
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -15,7 +16,6 @@ SessionLocal = sessionmaker(
     autoflush=False,
     bind=engine
 )
-
 
 # Database dependency
 def get_db():
