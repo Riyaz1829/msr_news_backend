@@ -11,3 +11,4 @@ if not SECRET_KEY:
 ALGORITHM = "HS256"
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
