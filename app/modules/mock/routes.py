@@ -8,13 +8,19 @@ router = APIRouter(
 
 MOCK_ARTICLES = [
     {
-        "id": "mock-article-001",
+        "id": "550e8400-e29b-41d4-a716-446655440001",
         "category": "Local News",
-        "headline": "Local development works begin in the mandal",
+        "headline": "Road improvement works begin in the mandal",
         "summary_60_words": (
-            "Development works have started in the local area. "
-            "Officials said the project will improve public "
-            "facilities and benefit nearby residents."
+            "Residents in the mandal welcomed the start of road "
+            "improvement works near the main market and surrounding "
+            "residential streets on Tuesday. Local officials said the "
+            "project includes repairing damaged stretches, improving "
+            "drainage points and adding safer pedestrian crossings. "
+            "The work is expected to reduce travel delays for school "
+            "students, traders and daily commuters. Authorities asked "
+            "residents to follow temporary traffic diversions until "
+            "construction is completed."
         ),
         "cover_image_url": "https://example.com/news-image-1.jpg",
         "blurhash": "",
@@ -23,16 +29,27 @@ MOCK_ARTICLES = [
         "mandal_name": "Sample Mandal",
         "published_at": "2026-11-17T10:00:00Z",
         "is_breaking": False,
-        "reporter": {"name": "Sample Reporter"},
-        "stats": {"views": 125}
+        "reporter": {
+            "name": "Sample Reporter"
+        },
+        "stats": {
+            "views": 125
+        }
     },
     {
-        "id": "mock-article-002",
-        "category": "Politics",
-        "headline": "Local representatives announce new public initiatives",
+        "id": "550e8400-e29b-41d4-a716-446655440002",
+        "category": "Education",
+        "headline": "Government school students participate in science exhibition",
         "summary_60_words": (
-            "Local representatives announced new initiatives "
-            "to improve public services and infrastructure."
+            "Government school students from several villages took "
+            "part in a mandal-level science exhibition, presenting "
+            "models on water conservation, renewable energy and waste "
+            "management. Teachers said the event encouraged practical "
+            "learning and helped students explain how science can "
+            "address everyday community problems. Education officials "
+            "visited the displays and appreciated the participants. "
+            "Selected projects will be considered for the district-level "
+            "exhibition scheduled later this month."
         ),
         "cover_image_url": "https://example.com/news-image-2.jpg",
         "blurhash": "",
@@ -41,16 +58,27 @@ MOCK_ARTICLES = [
         "mandal_name": "Sample Mandal",
         "published_at": "2026-11-17T11:00:00Z",
         "is_breaking": True,
-        "reporter": {"name": "Sample Reporter"},
-        "stats": {"views": 250}
+        "reporter": {
+            "name": "Sample Reporter"
+        },
+        "stats": {
+            "views": 250
+        }
     },
     {
-        "id": "mock-article-003",
-        "category": "Education",
-        "headline": "Government school students participate in science fair",
+        "id": "550e8400-e29b-41d4-a716-446655440003",
+        "category": "Public Issues",
+        "headline": "Officials discuss drinking water and sanitation concerns",
         "summary_60_words": (
-            "Students participated in a science fair showcasing "
-            "creative projects and innovative ideas."
+            "Local representatives met residents to discuss drinking "
+            "water supply, street lighting and sanitation concerns "
+            "raised in recent community meetings. Officials said "
+            "departments would inspect the reported locations and "
+            "prepare a priority list for follow-up work. Residents "
+            "requested clear timelines and regular updates on progress. "
+            "The meeting concluded with a commitment to review "
+            "unresolved complaints at the next mandal coordination "
+            "meeting."
         ),
         "cover_image_url": "https://example.com/news-image-3.jpg",
         "blurhash": "",
@@ -59,8 +87,12 @@ MOCK_ARTICLES = [
         "mandal_name": "Sample Mandal",
         "published_at": "2026-11-17T12:00:00Z",
         "is_breaking": False,
-        "reporter": {"name": "Sample Reporter"},
-        "stats": {"views": 180}
+        "reporter": {
+            "name": "Sample Reporter"
+        },
+        "stats": {
+            "views": 180
+        }
     }
 ]
 

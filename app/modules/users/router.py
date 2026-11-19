@@ -151,12 +151,11 @@ def change_password(
     }
 # Forgot Password API
 @router.post("/forgot-password")
-def forgot_password_route(
+async def forgot_password_route(
     user_data: ForgotPasswordRequest,
     db: Session = Depends(get_db)
 ):
-    return forgot_password(db, user_data)
-
+    return await forgot_password(db, user_data)
 
 # Reset Password API
 @router.post("/reset-password")

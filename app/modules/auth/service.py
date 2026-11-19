@@ -1,10 +1,10 @@
 
-from datetime import datetime, timedelta, timezone
-
 import jwt
 
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+
+from app.services.email_service import email_service
 
 from app.modules.auth.schemas import (
     UserRegistration,
@@ -74,26 +74,37 @@ def register_user(
     return new_user
 
 
-# User Login
+# User Login - Email or Mobile Number
 def login_user(
     db: Session,
     user_data: UserLogin
 ):
 
-    user = repository.get_user_by_email(
-        db,
-        user_data.email
-    )
+    identifier = user_data.identifier.strip()
 
+    # Find user using email or mobile number
+    if "@" in identifier:
+        user = repository.get_user_by_email(
+            db,
+            identifier
+        )
+    else:
+        user = repository.get_user_by_mobile(
+            db,
+            identifier
+        )
+
+    # Verify user and password
     if not user or not verify_password(
         user_data.password,
         user.password
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
+            detail="Invalid email/mobile number or password"
         )
 
+    # Generate access token
     access_token = create_access_token(
         data={"sub": str(user.id)}
     )
@@ -105,7 +116,7 @@ def login_user(
 
 
 # Forgot Password
-def forgot_password(
+async def forgot_password(
     db: Session,
     user_data: ForgotPasswordRequest
 ):
@@ -115,24 +126,29 @@ def forgot_password(
         user_data.email
     )
 
-    # Do not reveal whether an email exists
-    if not user:
-        return {
-            "message": "If the account exists, a password reset link will be sent."
-        }
+    # Generate and send reset link only if account exists
+    if user:
 
-    # Generate password reset token
-    reset_token = create_password_reset_token(
-        user.id
-    )
+        # Generate password reset token
+        reset_token = create_password_reset_token(
+            user.id
+        )
 
-    # DEVELOPMENT ONLY:
-    # Print token in terminal for Swagger testing.
-    # In production, send this token through email.
-    print("PASSWORD RESET TOKEN:", reset_token)
+        # Development frontend URL
+        reset_link = (
+            f"http://localhost:3000/reset-password"
+            f"?token={reset_token}"
+        )
 
+        # Send mock email
+        await email_service.send_password_reset_email(
+            recipient_email=user.email,
+            reset_link=reset_link
+        )
+
+    # Same response for existing and non-existing accounts
     return {
-        "message": "Password reset instructions generated. Check the backend terminal."
+        "message": "If the account exists, a password reset email will be sent."
     }
 
 
@@ -143,6 +159,7 @@ def reset_password(
 ):
 
     try:
+
         # Decode reset token
         payload = jwt.decode(
             user_data.reset_token,
@@ -160,12 +177,14 @@ def reset_password(
         user_id = int(payload.get("sub"))
 
     except jwt.InvalidTokenError:
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired reset token"
         )
 
     except (ValueError, TypeError):
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid reset token data"
@@ -178,6 +197,7 @@ def reset_password(
     )
 
     if user is None:
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
@@ -190,11 +210,14 @@ def reset_password(
 
     # Update database
     try:
+
         db.commit()
         db.refresh(user)
 
     except Exception:
+
         db.rollback()
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to reset password"
