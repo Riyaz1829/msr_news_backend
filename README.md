@@ -1,179 +1,233 @@
+
 # MSR News Backend
 
-Backend API for the MSR News Channel hyperlocal Telugu news application, built using FastAPI and Python.
+A REST API backend for the MSR News application, a hyperlocal Telugu news platform. Built using Python and FastAPI.
 
-## 1. Technology Stack
+## About the Project
 
-- **Backend Framework:** FastAPI
-- **Programming Language:** Python
-- **Database ORM:** SQLAlchemy
-- **Authentication:** JWT (HS256)
-- **Password Hashing:** Argon2
-- **Cache and Rate Limiting:** Redis
-- **Database Migrations:** Alembic
-- **API Documentation:** Swagger UI
+MSR News aims to deliver local news updates to users based on their locations.
 
-## 2. Project Structure
+The backend provides APIs for authentication, user management, news feeds, OTP services, password recovery, caching, and other platform features.
+
+## Technologies Used
+
+- Python 3.13
+- FastAPI
+- SQLAlchemy
+- Pydantic
+- PostgreSQL (planned production database)
+- SQLite (current local database setup)
+- Redis
+- JWT Authentication
+- Password Hashing
+- Docker (Redis development setup)
+
+## Project Structure
 
 ```text
 msr_news_backend/
 │
 ├── app/
-│   ├── main.py
-│   │
 │   ├── core/
 │   │   ├── config.py
 │   │   ├── redis.py
 │   │   └── security.py
 │   │
 │   ├── database/
+│   │   ├── async_session.py
 │   │   ├── base.py
-│   │   ├── session.py
-│   │   └── async_session.py
+│   │   └── session.py
 │   │
 │   ├── modules/
 │   │   ├── auth/
-│   │   ├── users/
-│   │   ├── reporters/
-│   │   ├── locations/
-│   │   ├── kyc/
 │   │   ├── community/
+│   │   ├── kyc/
+│   │   ├── locations/
+│   │   ├── mock/
 │   │   ├── notifications/
-│   │   └── mock/
+│   │   ├── reporters/
+│   │   └── users/
 │   │
 │   ├── schemas/
-│   └── services/
-│       ├── cache.py
-│       ├── email_service.py
-│       ├── msg91.py
-│       └── rate_limit.py
+│   ├── services/
+│   └── main.py
 │
-├── tests/
 ├── requirements.txt
-├── .env
 ├── .gitignore
 └── README.md
 ```
 
-## 3. Setup Instructions
+## Features Implemented
 
-### Prerequisites
+### Authentication
+- User registration
+- Login using email or mobile number
+- JWT access token generation
+- Password hashing and verification
+- Forgot password functionality
+- Password reset using JWT reset tokens
+- Password confirmation validation
 
-- Python installed
-- Redis installed or running through Docker
-- Git
+### OTP Services
+- Mock OTP sending service
+- Mobile number validation
+- Six-digit OTP generation
+- Redis-based rate limiting
+- Maximum 5 OTP requests per hour
 
-### Clone the repository
+### Email Services
+- Mock password reset email service
+- Development reset link generation
+
+### Caching
+- Redis connection
+- Cache data storage and retrieval
+- Cache deletion
+- Configurable cache expiration
+
+### Mock News Feed
+- Home feed API
+- Mock news articles
+- Pagination support
+
+## Installation and Setup
+
+### 1. Clone the Repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/Riyaz1829/msr_news_backend.git
 cd msr_news_backend
 ```
 
-### Create a virtual environment
+### 2. Create Virtual Environment
 
-```bash
+Windows:
+
+```powershell
 python -m venv venv
 ```
 
-### Activate the virtual environment
-
-Windows PowerShell:
+### 3. Activate Virtual Environment
 
 ```powershell
 .\venv\Scripts\Activate.ps1
 ```
 
-### Install dependencies
+### 4. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 4. Environment Configuration
+### 5. Configure Environment Variables
 
 Create a `.env` file in the project root.
 
+Add the required configuration values:
+
 ```env
-SECRET_KEY=your_secret_key
+SECRET_KEY=your-secret-key
+ALGORITHM=HS256
+DATABASE_URL=your-database-url
 REDIS_URL=redis://localhost:6379/0
 ```
 
-Use a strong, private secret key. Never commit `.env` or expose credentials in GitHub.
+Use your own secure development values. Never commit `.env` to GitHub.
 
-## 5. Start Redis
+### 6. Start Redis
 
-If using Docker:
+If using the existing Docker container:
 
 ```bash
 docker start msr-redis
 ```
 
-Check the Redis connection:
+Verify Redis:
 
 ```bash
 docker exec -it msr-redis redis-cli ping
 ```
 
-Expected response:
+Expected output:
 
 ```text
 PONG
 ```
 
-## 6. Run the Backend
-
-From the project root:
+### 7. Run FastAPI
 
 ```bash
-python -m uvicorn app.main:app --reload
+uvicorn app.main:app --reload
 ```
 
-Backend server:
+## API Documentation
 
-```text
-http://127.0.0.1:8000
-```
+Once the server starts, access:
 
-Swagger API documentation:
+- Swagger UI: http://127.0.0.1:8000/docs
+- ReDoc: http://127.0.0.1:8000/redoc
 
-```text
-http://127.0.0.1:8000/docs
-```
+## Authentication API Endpoints
 
-Alternative API documentation:
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /auth/register | User registration |
+| POST | /auth/login | Login using email or mobile |
+| POST | /users/forgot-password | Request password reset |
+| POST | /users/reset-password | Reset password |
 
-```text
-http://127.0.0.1:8000/redoc
-```
+## OTP API Endpoints
 
-## 7. Current Backend Modules
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /api/v1/auth/otp/send | Send mock OTP |
 
-| Module | Purpose |
+Note: OTP verification is not implemented yet.
+
+## Development Status
+
+- Authentication APIs: Implemented and tested
+- Password recovery: Implemented and tested with mock email
+- OTP sending: Mock implementation tested
+- Redis rate limiting: Implemented and tested
+- Redis caching: Implemented and tested
+- News feed: Mock implementation available
+- Google Login: Planned
+- Real email delivery: Pending provider configuration
+- Real SMS delivery: Pending MSG91 credentials and approved DLT configuration
+- Production database integration: Pending database team integration
+
+## Security Notes
+
+- Passwords are hashed before storage.
+- JWT tokens are used for authentication.
+- Environment variables are used for sensitive configuration.
+- Mock email and OTP services are for development only.
+- Mock authentication must not be used in production.
+
+## Repository
+
+GitHub: https://github.com/Riyaz1829/msr_news_backend
+
+## License
+
+Internal project – MSR News.
+
+## Backend Tests
+
+The following test scripts are available in the `tests/` directory:
+
+| Test File | Purpose |
 |---|---|
-| Auth | User registration and login |
-| Users | User-related operations and password reset |
-| Reporters | Reporter-related module |
-| Locations | Location-related module |
-| KYC | Identity verification module |
-| Community | Community-related module |
-| Notifications | Notification-related module |
-| Mock | Mock home feed endpoint |
+| test_redis.py | Redis connection and operations |
+| test_cache.py | Cache storage, retrieval and deletion |
+| test_cache_ttl.py | Cache expiration verification |
+| test_msg91.py | Mock MSG91 service validation |
+| test_rate_limit.py | OTP rate-limit verification |
 
-The presence of a module in the project structure does not necessarily mean all its functionality is complete.
+### Run Tests
 
-## 8. Supporting Services
-
-- **Redis Cache:** Provides reusable cache operations with TTL support.
-- **Rate Limiting:** Redis-based OTP request rate limiting.
-- **Email Service:** Mock password-reset email service for development.
-- **MSG91 Service:** Mock OTP dispatch service for development.
-
-Mock services simulate provider responses. They do not deliver real emails or SMS messages.
-
-## 9. Running Backend Tests
-
-Run the test modules from the project root:
+Execute from the project root:
 
 ```bash
 python -m tests.test_redis
@@ -181,27 +235,3 @@ python -m tests.test_cache
 python -m tests.test_cache_ttl
 python -m tests.test_msg91
 python -m tests.test_rate_limit
-```
-
-These tests cover Redis connectivity, cache operations, TTL expiry, mock MSG91 behavior, and OTP rate limiting.
-
-## 10. Development Notes
-
-- Keep sensitive credentials inside `.env`.
-- Do not commit virtual environments, database files, or Python cache files.
-- Coordinate database schema changes with the database team.
-- Real OTP and email provider integration requires approved credentials and configuration.
-- Verify unfinished modules before treating them as production-ready.
-
-## 11. API Development
-
-The backend uses FastAPI routers to organize endpoints by module.
-
-New endpoints should follow the existing module structure and separate route handling, validation, and business logic where appropriate.
-
----
-
-**Project:** MSR News Channel  
-**Component:** Backend API  
-**Framework:** FastAPI  
-**Documentation Status:** Development documentation
