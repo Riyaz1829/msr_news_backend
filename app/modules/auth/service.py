@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.services.email_service import email_service
+from app.services.otp_service import consume_mobile_verification
 
 from app.modules.auth.schemas import (
     UserRegistration,
@@ -25,8 +26,8 @@ from app.core.security import (
 from app.core.config import SECRET_KEY, ALGORITHM
 
 
-# User Registration
-def register_user(
+# User Registration - OTP Verification Required
+async def register_user(
     db: Session,
     user_data: UserRegistration
 ):
@@ -55,6 +56,20 @@ def register_user(
             detail="Mobile number already registered"
         )
 
+    # Check and consume mobile OTP verification
+    is_verified = await consume_mobile_verification(
+        user_data.mobile_number
+    )
+
+    if not is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "MOBILE_NOT_VERIFIED",
+                "message": "Please verify your mobile number using OTP before registration."
+            }
+        )
+
     # Convert schema to dictionary
     user_dict = user_data.model_dump(
         exclude={"confirm_password"}
@@ -66,12 +81,19 @@ def register_user(
     )
 
     # Save user
-    new_user = repository.create_user(
-        db,
-        user_dict
-    )
+    try:
+        new_user = repository.create_user(
+            db,
+            user_dict
+        )
+        return new_user
 
-    return new_user
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to register user"
+        )
 
 
 # User Login - Email or Mobile Number
@@ -129,24 +151,20 @@ async def forgot_password(
     # Generate and send reset link only if account exists
     if user:
 
-        # Generate password reset token
         reset_token = create_password_reset_token(
             user.id
         )
 
-        # Development frontend URL
         reset_link = (
             f"http://localhost:3000/reset-password"
             f"?token={reset_token}"
         )
 
-        # Send mock email
         await email_service.send_password_reset_email(
             recipient_email=user.email,
             reset_link=reset_link
         )
 
-    # Same response for existing and non-existing accounts
     return {
         "message": "If the account exists, a password reset email will be sent."
     }
@@ -160,14 +178,12 @@ def reset_password(
 
     try:
 
-        # Decode reset token
         payload = jwt.decode(
             user_data.reset_token,
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )
 
-        # Verify token purpose
         if payload.get("purpose") != "password_reset":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -190,7 +206,6 @@ def reset_password(
             detail="Invalid reset token data"
         )
 
-    # Find user
     user = repository.get_user_by_id(
         db,
         user_id
@@ -203,12 +218,10 @@ def reset_password(
             detail="User not found"
         )
 
-    # Hash new password
     user.password = hash_password(
         user_data.new_password
     )
 
-    # Update database
     try:
 
         db.commit()

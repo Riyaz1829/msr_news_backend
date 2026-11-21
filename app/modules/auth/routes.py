@@ -1,6 +1,4 @@
 
-import secrets
-
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
@@ -11,7 +9,8 @@ from app.modules.auth.schemas import (
     UserResponse,
     UserLogin,
     TokenResponse,
-    OTPSendRequest
+    OTPSendRequest,
+    OTPVerifyRequest
 )
 
 from app.modules.auth.service import (
@@ -21,6 +20,11 @@ from app.modules.auth.service import (
 
 from app.services.msg91 import msg91_service
 from app.services.rate_limit import check_otp_rate_limit
+from app.services.otp_service import (
+    generate_otp,
+    store_otp,
+    verify_otp
+)
 
 
 # Existing authentication router
@@ -36,19 +40,17 @@ otp_router = APIRouter(
 )
 
 
-# Send OTP API - Mock SMS with Redis Rate Limiting
+# Send OTP API
 @otp_router.post(
     "/otp/send",
     status_code=status.HTTP_202_ACCEPTED
 )
 async def send_otp(user_data: OTPSendRequest):
 
-    # Step 1: Check OTP request limit using Redis
     allowed = await check_otp_rate_limit(
         user_data.mobile_number
     )
 
-    # Step 2: Reject if maximum requests exceeded
     if not allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -58,10 +60,13 @@ async def send_otp(user_data: OTPSendRequest):
             }
         )
 
-    # Step 3: Generate a secure six-digit OTP
-    otp = str(secrets.randbelow(900000) + 100000)
+    otp = generate_otp()
 
-    # Step 4: Dispatch through mock MSG91 service
+    await store_otp(
+        user_data.mobile_number,
+        otp
+    )
+
     try:
         result = await msg91_service.send_otp(
             mobile_number=user_data.mobile_number,
@@ -74,7 +79,6 @@ async def send_otp(user_data: OTPSendRequest):
             detail=str(exc)
         )
 
-    # Step 5: Return API response
     return {
         "success": True,
         "data": {
@@ -89,17 +93,52 @@ async def send_otp(user_data: OTPSendRequest):
     }
 
 
-# User Registration API
+# Verify OTP API
+@otp_router.post(
+    "/otp/verify",
+    status_code=status.HTTP_200_OK
+)
+async def verify_mobile_otp(
+    user_data: OTPVerifyRequest
+):
+
+    is_valid = await verify_otp(
+        user_data.mobile_number,
+        user_data.otp
+    )
+
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_OR_EXPIRED_OTP",
+                "message": "Invalid or expired OTP."
+            }
+        )
+
+    return {
+        "success": True,
+        "data": {
+            "mobile_number": user_data.mobile_number,
+            "verified": True,
+            "message": "Mobile number verified successfully."
+        },
+        "meta": None,
+        "error": None
+    }
+
+
+# User Registration API - OTP Verification Required
 @router.post(
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED
 )
-def user_registration(
+async def user_registration(
     user_data: UserRegistration,
     db: Session = Depends(get_db)
 ):
-    return register_user(db, user_data)
+    return await register_user(db, user_data)
 
 
 # User Login API

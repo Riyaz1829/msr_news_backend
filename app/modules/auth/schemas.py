@@ -111,3 +111,18 @@ class OTPSendRequest(BaseModel):
         max_length=15,
         pattern=r"^[0-9]+$"
     )
+
+# OTP Verification Schema
+class OTPVerifyRequest(BaseModel):
+
+    mobile_number: str = Field(
+        min_length=10,
+        max_length=15,
+        pattern=r"^[0-9]+$"
+    )
+
+    otp: str = Field(
+        min_length=6,
+        max_length=6,
+        pattern=r"^[0-9]{6}$"
+    )
